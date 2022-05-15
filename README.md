@@ -17,6 +17,7 @@ mr hive hello.
 
 A BCDEF
 1、找到A到BCDEF的共同好友数。
+
 2、按照共同好友数对BCDEF进行排序。
 
 **第一次map**
@@ -71,6 +72,7 @@ key:cat_hadoop  value:2
 ```
 
 因为hadoop hello 3 可以给hadoop推荐hello，共同好友3。可以给hello推荐hadoop，共同好友3。
+
 通过Mykey实现WritableComparable接口，对Mykey进行比较，实现compareTo()、writ()、readFields()三个方法，需要按照共同好友数倒序排列。
 
 map输出：
@@ -78,7 +80,9 @@ map输出：
 <obj,"hadoop_hello\t3">
 <obj,"hello_hadoop\t3">
 ```
+
 这时候表示从hadoop看与hello的关系有3个共同好友,即从hadoop看谁的共同好友数多即有可能认识，从而推荐。
+
 这时候表示从hello看与hadoop的关系有3个共同好友,即从hello看谁的共同好友数多即有可能认识，从而推荐。
 
 **此时MyGroupingComparator和MyPartitioner分别重写compare()方法和getPartition()方法实现分组和分区。**
@@ -112,12 +116,13 @@ hadoop tom hive world
 hello tom world hive mr
 ```
 ### MapRedece编码规范
-1.Mapper阶段
+1. Mapper阶段
 * 用户自定义的Mapper要继承自己的父类
 * Mapper的输入数据是KV对的形式（KV的类型可自定义）
 * Mapper中的业务逻辑写在map()方法中
 * Mapper的输出数据是KV对的形式（KV的类型可自定义）
 * map()方法（MapTask进程）对每一个调用一次
+
 
 2. Reducer阶段
 * 用户自定义的Reducer要继承自己的父类
@@ -125,7 +130,8 @@ hello tom world hive mr
 * Reducer的业务逻辑写在reduce()方法中
 * ReduceTask进程对每一组相同k的组调用一次reduce()方法
 
-3.Driver阶段
+
+3. Driver阶段
 * 相当于YARN集群的客户端，用于提交我们整个程序到YARN集群，提交的是封装了MapReduce程序相关运行参数的job对象
 
 ## configuration类简介
@@ -140,11 +146,15 @@ Hadoop没有使用java.util.Properties管理配置文件，也没有使用Apache
 docker pull ruo91/hadoop
 ```
 
+运行ruo91/hadoop容器
 ```
 docker run -it --name hadoop  -p  50070:50070 -p 9000:9000 -p  8088:8088 ruo91/hadoop /etc/bootstrap.sh -bash
 ```
+
 50070：HDFS文件管理页面
+
 9000：是fileSystem默认的端口号 浏览器直接访问是访问不到的
+
 8088：运行mapreduce作业，其的运行状态会在8088显示
 
 浏览器输入localhost:50070  or localhost:8088可以进入相应的web界面。
@@ -153,9 +163,10 @@ docker run -it --name hadoop  -p  50070:50070 -p 9000:9000 -p  8088:8088 ruo91/h
 
 **win11下会存在的错误**
 使用Docker Desktop启动一个镜像以后，发现直接 EXITED(139)这时候用 docker log containerId 也获取不到任何日志
-我找到的资料目前主要是libc的版本低于2.14会导致出现 exit 139 的这样一个问题，可能与Linux内核相关
-解决方法
 
+我找到的资料目前主要是libc的版本低于2.14会导致出现 exit 139 的这样一个问题，可能与Linux内核相关
+
+解决方法：
 ```
 创建C:\Users\(用户名)\.wslconfig，里面写入
 [wsl2]
