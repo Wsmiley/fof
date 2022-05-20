@@ -16,11 +16,13 @@ mr hive hello.
 ```
 
 A BCDEF
+
+
 1、找到A到BCDEF的共同好友数。
 
 2、按照共同好友数对BCDEF进行排序。
 
-**第一次map**
+### **第一次map**
 
 
 **输入数据：**
@@ -28,9 +30,11 @@ A BCDEF
 tom hello hadoop cat
 world hadoop hello hive
 cat tom hive
-mr hive hello.
+mr hive hello
 ```
-**要输出数据**
+**要输出数据如下数据**
+
+以tom hello hadoop cat该条数据为例
 
 **R 代表认识**
 ```
@@ -49,18 +53,19 @@ hadoop_cat  G
 
 > 将全部文件遍历处理完毕，然后将所有的hello_hadoop的关系以及hadoop_helo的关系全部找出来，看一共多少个键值对，也就是共同好友数。
 
-map输出：
+map输出格式如下：
 ```
-<"hello_hadoop","R">
+<"tom_hello","R">
 <"hello_cat","G">
 ```
 
 **第一次reduce**
 
 去除关系"R",统计关系"G"。
-reduce输出
+
+reduce输出格式如下
 ```
-<"hadoop_hello", 3>   hadoop与hello 之间有3个共同好友
+<"hadoop_hello", 3>   //hadoop与hello 之间有3个共同好友
 ```
 
 
@@ -101,9 +106,13 @@ map输出：
 ## 实验环境 
 
 * Win11 
-* Docker-20.10.14
-* hadoop-2.7.2
-* jdk 1.8
+* Docker
+  * [ruo91/hadoop:lastest](https://hub.docker.com/search?q=%20ruo91%2Fhadoop)
+  * hadoop-2.7.2
+  * jdk 1.8
+
+![](public/version.png)
+
 
 数据集fof.txt
 ```txt
@@ -134,9 +143,8 @@ hello tom world hive mr
 3. Driver阶段
 * 相当于YARN集群的客户端，用于提交我们整个程序到YARN集群，提交的是封装了MapReduce程序相关运行参数的job对象
 
-## configuration类简介
+### configuration类简介
 Hadoop没有使用java.util.Properties管理配置文件，也没有使用Apache Jakarta Commons Configuration管理配置文件，而是使用了一套独有的配置文件管理系统，并提供自己的API，即用org.apache.hadoop.conf.Configuration处理配置信息。这个类是作业的配置信息类，任何作用的配置信息必须通过Configuration传递，因为通过Configuration可以实现在多个mapper和多个reducer任务之间共享信息
-
 
 
 ### 实验过程
@@ -148,8 +156,9 @@ docker pull ruo91/hadoop
 
 运行ruo91/hadoop容器
 ```
-docker run -it --name hadoop  -p  50070:50070 -p 9000:9000 -p  8088:8088 ruo91/hadoop /etc/bootstrap.sh -bash
+docker run -d --name="hadoop" -h "hadoop" -p 8042:8042 -p 8088:8088 -p 50070:50070 -p 50075:50075 -p 50090:50090 ruo91/hadoop /etc/bootstrap.sh -bash
 ```
+
 
 50070：HDFS文件管理页面
 
@@ -160,6 +169,17 @@ docker run -it --name hadoop  -p  50070:50070 -p 9000:9000 -p  8088:8088 ruo91/h
 浏览器输入localhost:50070  or localhost:8088可以进入相应的web界面。
 
 ![](./public/ps.png)
+
+![](public/BrowseDirectory.png)
+
+![](public/hadoop.png)
+
+jps
+查看hadoop服务是否正常开启。否，执行命令
+>$ start-all.sh
+
+![](./public/jps.png)
+
 
 **win11下会存在的错误**
 使用Docker Desktop启动一个镜像以后，发现直接 EXITED(139)这时候用 docker log containerId 也获取不到任何日志
@@ -174,27 +194,28 @@ kernelCommandLine = vsyscall=emulate
 ```
 
 导入数据集到hadoop容器内。
-> docker cp fof.txt 容器id:/
+```
+docker cp fof.txt 容器id:/
+```
 
 进入hadoop容器
-> docker exec -it 容器id "bash"
-
-
-jps
-查看hadoop服务是否正常开启。否，执行命令
->$ start-all.sh
-
-![](./public/jps.png)
+```
+docker exec -it 容器id "bash"
+```
 
 将fof.txt数据上传到hdfs中。
+
 HDFS上传文件：
-> hdfs dfs -put text.txt /test
+```
+hdfs dfs -put text.txt /test
+```
 
 可能有用的命令：
 > * HDFS创建文件夹：hdfs dfs -mkdir -p /test
 > * 查看文件目录：hdfs dfs -ls
 > * 删除文件：hdfs dfs -rm  /text.txt
 > * 查看文件内容 hdfs dfs -cat 
+
 
 ### code
 准备好数据集与环境后，编写完代码通过生成jar包文件，将jar导入hadoop容器中。
@@ -204,7 +225,7 @@ HDFS上传文件：
 
 执行程序:
 ```
-$ hadoop jar fof.jar fof.MainClass /data/fof/input/fof.txt /out/friend/a11 /out/friend/b11
+$ hadoop jar fof.jar fof.MainClass /data/fof/input/fof.txt /out/friend/a10 /out/friend/b10
 ```
 命令行参数解释：
 * fof.jar 为生成导入的jar包
@@ -219,7 +240,11 @@ $ hadoop jar fof.jar fof.MainClass /data/fof/input/fof.txt /out/friend/a11 /out/
 
 **可能存在问题的解决：**
 
-> org.apache.hadoop.dfs.SafeModeException: Cannot delete/user/hadoop/input. Name node is in safe mode.
+1. org.apache.hadoop.dfs.SafeModeException: Cannot delete/user/hadoop/input. Name node is in safe mode.
 
-在安全模式下输入指令：
-> hadoop dfsadmin -safemode leave
+    在安全模式下输入指令：
+    > hadoop dfsadmin -safemode leave
+2. windows下Hadoop在浏览器中Browse Directory，无法下载文件的问题
+
+    docker网络问题，因为没有指定docker网络，所以网络都默认分配到docker0上。而使用ifconfig命令也是只能得到docker0下的容器网络地址(即docker0的内网地址)。宿主机要通过映射docker0的网段进行访问(相当于路由器)。
+    > 修改windows下的hosts文件，将容器名称映射为docker0的地址，因为download会访问 容器名:50075的地址，此操作是通过docker0的50075端口转发到容器内。部署集群的话还是用自定义网络(brige)好。
